@@ -4,6 +4,9 @@ SISTEMAS OPERATIVOS - EIF-212
 PROYECTO #1
 ESTUDIANTES: DAVID BARRIENTOS, DANIEL MADRIGAL
 PROFESOR: JOSE CALVO SUÁREZ
+
+REFERENCIAS:
+https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd00/rtgtlgr.htm
 */
 
 #include <sys/types.h>
@@ -11,11 +14,25 @@ PROFESOR: JOSE CALVO SUÁREZ
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-bool shell_Loop();
 int main(){
+
     pid_t pid;
-    bool flag;
-    shell_Loop();
+    char* username;
+    username=getlogin();
+     bool flag=false;
+     char str[300]="";
+    while (flag==false)
+    {
+    strcpy(str,"");
+      printf("%s%s%s","@",username,">>>");
+      gets(str);
+      int n=strlen(str);
+      printf("%s\n",str);
+      if(strcmp(str,"exit")==0){
+          flag=true;
+      }
+      
+    }
     pid=fork();
     if(pid < 0){
         printf("Error en la llamada fork()");
@@ -28,23 +45,4 @@ int main(){
         printf("hola soy el padre\n");
     }
     return 0;
-}
-
-bool shell_Loop(){
-    bool flag=false;
-     char *str, *fgets_return;
-      int temp;
-  
-    char* command;
-    while (flag==false)
-    {
-        strcpy(str, "");
-        printf("%s\n","@User>>>");
-      fgets_return = fgets( str, sizeof(str), stdin);
-      printf("%s\n",str);
-      if(str=="exit"){
-          flag=true;
-      }
-    }
-    return flag;
 }
