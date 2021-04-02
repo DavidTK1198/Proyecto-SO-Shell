@@ -15,11 +15,12 @@ https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd0
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <wait.h>
-int n=0;
+//int n=0;
 int tuberia[2];
- char str[80] = "";
- char test[15][15]={};
+char str[80];
+ //char test[15][15]={};
  void initProcess();
 int main(){
     pid_t pid;
@@ -42,14 +43,13 @@ int main(){
         printf("%s%s%s", "@", username, ">>>");
         gets(str);
         if (strcmp(str, "exit") == 0){
-                break;
                 close(tuberia[1]);
                 close(tuberia[0]);
+                break;
                 }
         write(tuberia[1],str,sizeof(str));
             wait(NULL);
             pid = fork();
-        
             if(pid==0){
             initProcess();
             }
@@ -58,24 +58,40 @@ int main(){
     }
     
     return 0;
-    //hola
+    
 }
 
 void initProcess(){
     read(tuberia[0], str, sizeof(str));
         sleep(3);
-        n = strlen(str);
-        int contador=0;
-        char aux[30] = "";
-        for (int i = 0; i <= n - 1; i++)
-        {
-            if (str[i] == ' ')
-            {
-          strcpy(test[contador], aux);
-            //strncpy(aux, "\0", sizeof(aux));// ./bin/ps ps 
-            contador++;
-            }
-            aux[i] = str[i];
-        }
-        execlp(test[0], test[0], NULL); 
+        //n = strlen(str);
+        //int contador=0;
+        //char aux[30] = "";
+        //int j=0;
+         char *token;
+         char* argv[100];                   //split command into separate strings
+    token = strtok(str," ");
+    int i=0;
+    while(token!=NULL){
+        argv[i]=token;      
+        token = strtok(NULL," ");
+        i++;
+    }
+    argv[i]=NULL;
+        //for (int i = 0; i <= n; i++)
+        //{
+            ///if (str[i] == ' ' || str[i]=='\0'){
+          //strcpy(test[contador], aux);
+            //memset(aux, 0, sizeof(aux));//./bin/ps ps 
+            //contador++;
+            //j=0;
+            //}else{ //" shell.c"
+            //aux[j] = str[i];
+            //j++;
+          //  }
+            
+        //}
+        int p=execvp(argv[0],argv);
+        printf("%s","Comando o ruta no encontrada"); 
+        exit(-1);
 }
