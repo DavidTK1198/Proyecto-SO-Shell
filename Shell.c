@@ -34,13 +34,12 @@ int main(){
         _exit(-1);
     }
     else if (pid == 0){
-        printf("hola soy el hijo");
         initProcess();
     }
     else{
         while (true){
         strcpy(str, "");
-        printf("%s%s%s", "@", username, ">>>");
+        printf("%s%s%s", "@", username, ">>>$");
         gets(str);
         if (strcmp(str, "exit") == 0){
                 close(tuberia[1]);
@@ -61,15 +60,14 @@ int main(){
     
 }
 
-void initProcess(){
+void initProcess(){//hace faltar hacer los if & y |
     read(tuberia[0], str, sizeof(str));
-        sleep(3);
         //n = strlen(str);
         //int contador=0;
         //char aux[30] = "";
         //int j=0;
          char *token;
-         char* argv[100];                   //split command into separate strings
+         char* argv[100];                   
     token = strtok(str," ");
     int i=0;
     while(token!=NULL){
@@ -92,6 +90,6 @@ void initProcess(){
             
         //}
         int p=execvp(argv[0],argv);
-        printf("%s","Comando o ruta no encontrada"); 
+        printf("%s\n","Comando o ruta no encontrada"); 
         exit(-1);
 }
