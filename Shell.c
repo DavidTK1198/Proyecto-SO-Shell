@@ -21,15 +21,17 @@ https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd0
 #include <stdlib.h>
 #include <wait.h>
 bool checkPipe(char **);
-bool getNextLine(char **, int *);
+bool getNextLine(int *);
 void pipeProcess(char **);
 void pipeProcess2(char **);
 void initProcess(char **);
 void convertToString(char **);
 bool checkAmperson(char**);
+void readf();
+void writef();
 int fd[2];
-char str[80];
-char aux[80];
+char str[200];
+char aux[200];
 int n = 0;
 int j=0;
 int main(int argc, char *argv[])
@@ -41,10 +43,26 @@ int main(int argc, char *argv[])
     bool flag2 = false;
     char *argv2[100];
     char *ret;
-if (n > 2)
-    {
-      flag=true;
-    }
+ret = strchr(argv[0], '/');
+    if (n < 2 && ret == NULL){
+          initProcess(argv);
+    }else{
+        if(n>=2){
+    flag=checkPipe(argv);
+      if(flag){
+          ret = strchr(argv[n-1], '*');
+          if(ret!=NULL){
+              argv[n-1]=NULL;
+              pipeProcess2(argv);
+            initProcess(argv);
+          }
+          pipeProcess(argv);
+          initProcess(argv);
+      }else{
+          initProcess(argv);
+      }
+        }
+        }
     //////////////
     while (true)
     {
@@ -61,26 +79,25 @@ if (n > 2)
             exit(1);
         }
         if (pid == 0)
-        {   read(fd[0], str, sizeof(str));
+        {   readf();
             convertToString(argv2);
-            if(flag==false && !checkPipe(argv2)){ 
-             pipeProcess(argv2);
-             int p = execv("./a.out", argv2);
-            }else{
-            if (flag2=false)
-                 initProcess(argv2);
-            }else{
-                initProcess(argv1);
-            }
-            
-             printf("%s\n", "Comando o ruta no encontrada");
-                exit(-1);
-        }
+            int p = execv("./a.out", argv2);
+        printf("%s\n", "Comando o ruta no encontrada");
+                exit(-1);   
+         }
         else
         {
-            getNextLine(argv2,&pid);
+            
+            getNextLine(&pid);
+            convertToString(argv2);
             flag2 = checkAmperson(argv2);
             flag=checkPipe(argv2);
+            if(flag){
+                n=strlen(aux);
+                aux[n]=' ';
+                aux[n+1]='*';
+                writef();
+            }
             if(flag2){
                  waitpid(pid, NULL, WNOHANG);
             }else if (flag){
@@ -92,11 +109,13 @@ if (n > 2)
                 }
                 if (pid2 == 0)
                 {
-                   checkPipe(argv);
-                   pipeProcess2(argv);
+            convertToString(argv2);
+            int p = execv("./a.out", argv2);
+            printf("%s\n", "Comando o ruta no encontrada");
+                exit(-1);   
                 }
                 else
-                {   write(fd[1], aux, sizeof(str));
+                {
                     waitpid(pid, NULL, 0);
                     waitpid(pid2, NULL, 0);
                 }
@@ -122,9 +141,13 @@ void pipeProcess(char **argv)
         argv[i] = NULL; //cat Shell.c
     }
 }
-
-bool checkAmperson(argv){
+bool checkAmperson(char ** argv){
+    char* ret;
+    if(argv[n-1]!=NULL){
      ret = strchr(argv[n - 1], '&');
+    }else{
+        return false;
+    }
     if (ret != NULL){
         argv[n - 1] = NULL;
         return true;
@@ -169,23 +192,37 @@ bool checkPipe(char **argv)
     n = strlen(argv);
     for (int i = 0; i < n - 1; i++)
     {
+        if(argv[i]==NULL){
+            return false;
+        }
         helpme = strchr(argv[i], '|');
+        
         if (helpme != NULL)
-        {
+        {   argv[n-1]=NULL;
             return true;
         }
         j++;
     }
     return false;
 }
-bool getNextLine(char **ar, int *pid)
+
+void readf(){
+    FILE* f=fopen("historial.txt","r");
+ fgets(str,200,f);
+    fclose(f);
+}
+void writef(){
+FILE* f=fopen("historial.txt","w");
+ fprintf(f,aux);
+    fclose(f);
+}
+bool getNextLine(int *pid)
 {
     char *username;
     username = getlogin();
     strcpy(str, "");
     printf("%s%s%s", "@", username, ">>>$");
     gets(str);
-    write(fd[1], aux, sizeof(str));
     strcpy(aux,str);
     if (strcmp(str, "exit") == 0)
     {
