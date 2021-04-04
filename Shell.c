@@ -34,36 +34,13 @@ char str[200];
 char aux[200];
 int n = 0;
 int j=0;
-int main(int argc, char *argv[])
+int main()
 {
     pid_t pid;
     pid_t pid2;
-    int n = argc;
-    bool flag = false;
-    bool flag2 = false;
-    char *argv2[100];
-    char *ret;
-ret = strchr(argv[0], '/');
-    if (n < 2 && ret == NULL){
-          initProcess(argv);
-    }else{
-        if(n>=2){
-    flag=checkPipe(argv);
-      if(flag){
-          ret = strchr(argv[n-1], '*');
-          if(ret!=NULL){
-              argv[n-1]=NULL;
-              pipeProcess2(argv);
-            initProcess(argv);
-          }
-          pipeProcess(argv);
-          initProcess(argv);
-      }else{
-          initProcess(argv);
-      }
-        }
-        }
-    //////////////
+    bool flag=false;
+    bool flag2=false;
+    char* argv2[100];
     while (true)
     {
         pipe(fd);
@@ -81,7 +58,11 @@ ret = strchr(argv[0], '/');
         if (pid == 0)
         {   readf();
             convertToString(argv2);
-            int p = execv("./a.out", argv2);
+            flag=checkPipe(argv2);
+            if(flag){
+                pipeProcess(argv2);
+            }
+            int p = execv(argv2, argv2);
         printf("%s\n", "Comando o ruta no encontrada");
                 exit(-1);   
          }
@@ -92,12 +73,6 @@ ret = strchr(argv[0], '/');
             convertToString(argv2);
             flag2 = checkAmperson(argv2);
             flag=checkPipe(argv2);
-            if(flag){
-                n=strlen(aux);
-                aux[n]=' ';
-                aux[n+1]='*';
-                writef();
-            }
             if(flag2){
                  waitpid(pid, NULL, WNOHANG);
             }else if (flag){
@@ -109,8 +84,11 @@ ret = strchr(argv[0], '/');
                 }
                 if (pid2 == 0)
                 {
+                readf();
             convertToString(argv2);
-            int p = execv("./a.out", argv2);
+            checkPipe(argv2);
+            pipeProcess2(argv2);
+            initProcess(argv2);
             printf("%s\n", "Comando o ruta no encontrada");
                 exit(-1);   
                 }
@@ -207,7 +185,7 @@ bool checkPipe(char **argv)
 }
 
 void readf(){
-    FILE* f=fopen("historial.txt","r");
+FILE* f=fopen("historial.txt","r");
  fgets(str,200,f);
     fclose(f);
 }
@@ -229,6 +207,7 @@ bool getNextLine(int *pid)
         kill(*pid, SIGKILL);
         exit(1);
     }
+    writef();
     return true;
 }
 void initProcess(char **argv)
