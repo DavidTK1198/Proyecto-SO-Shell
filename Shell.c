@@ -21,7 +21,6 @@ https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd0
 #include <signal.h>
 #include <stdlib.h>
 #include <wait.h>
-void initProcess();
 void get_Line();        //primero  * segundo
 char str[80];       //cat shell.c | less los 2
 int main(int argc, char *argv[])
