@@ -21,8 +21,19 @@ https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd0
 #include <signal.h>
 #include <stdlib.h>
 #include <wait.h>
-void get_Line();        //primero  * segundo
-char str[80];       //cat shell.c | less los 2
+void get_Line(bool);
+void writef();
+void append();
+//bool checkPipe(char **);
+//void pipeProcess(char **);
+//void pipeProcess2(char **);
+//void initProcess(char **);
+//bool checkAmperson(char**);
+char str[300];
+char commad_list[100][100];
+int p=0;
+bool init_Array();
+void print_Array();
 int main(int argc, char *argv[])
 {
     pid_t pid;
@@ -34,7 +45,7 @@ int main(int argc, char *argv[])
     pipe(fd);
     char *ret;
     char *helpme;
-    int j=0;
+    int j = 0;
     if (n > 2)
     {
         for (int i = 0; i < n; i++)
@@ -50,58 +61,70 @@ int main(int argc, char *argv[])
     }
     //////////////
     ret = strchr(argv[n - 1], '&');
-    if (ret != NULL){
+    if (ret != NULL)
+    {
         argv[n - 1] = NULL;
         flag = true;
-    } //ls -a
+    } //
     ////////
     ret = strchr(argv[0], '/');
-    if (n < 2 && ret != NULL){
-        get_Line();
+    if (n < 2 && ret != NULL)
+    {
+        get_Line(false);
     }
 
-        pid = fork();
-        if (pid < 0)
+    pid = fork();
+    if (pid < 0)
+    {
+        printf("Error en la llamada fork()");
+        _exit(-1);
+    }
+    else if (pid == 0)
+    {
+        if (flag2)
         {
-            printf("Error en la llamada fork()");
-            _exit(-1);
-        }
-        else if (pid == 0){
-            if (flag2){  
-                dup2(fd[1],STDOUT_FILENO);
-                close(fd[0]);
-                close(fd[1]);
-                char* token;
-                //cat shell.c --> se va| less ssss s...
-                for(int i=j;i<n;i++){
-                    token=argv[i];
-                    argv[i]=NULL;//cat Shell.c
-                }
-                int c = execvp(argv[0], argv);
+            dup2(fd[1], STDOUT_FILENO);
+            close(fd[0]);
+            close(fd[1]);
+            char *token;
+            //cat shell.c --> se va| less ssss s...
+            for (int i = j; i < n; i++)
+            {
+                token = argv[i];
+                argv[i] = NULL; //cat Shell.c
             }
-            ///////////////
-            int p = execvp(argv[0], argv);
-            printf("%s\n", "Comando o ruta no encontrada");
-            exit(-1);
-        }else{
-        if(flag2){
-            pid2=fork();
-            if(pid2==0){
-                dup2(fd[0],STDIN_FILENO);
+            int c = execvp(argv[0], argv);
+        }
+        ///////////////
+        int p = execvp(argv[0], argv);
+        printf("%s\n", "Comando o ruta no encontrada");
+        exit(-1);
+    }
+    else
+    {
+        if (flag2)
+        {
+            pid2 = fork();
+            if (pid2 == 0)
+            {
+                dup2(fd[0], STDIN_FILENO);
                 close(fd[0]);
                 close(fd[1]);
                 char *argv2[100];
-                int contador=0;
-                for(int i=j+1;i<n;i++){
-                    argv2[contador]=argv[i];
+                int contador = 0;
+                for (int i = j + 1; i < n; i++)
+                {
+                    argv2[contador] = argv[i];
                     contador++;
                 }
-                argv2[contador]=NULL;
+                argv2[contador] = NULL;
                 int pp = execvp(argv2[0], argv2);
                 printf("%s\n", "Comando o ruta no encontrada");
                 exit(-1);
-            }else{
-            goto next;
+            }
+            else
+            {
+                goto next;
             }
         }
     }
@@ -114,31 +137,108 @@ int main(int argc, char *argv[])
     {
         wait(NULL);
     }
-   
+
     if (flag)
     {
         int c = getchar();
     }
-    next:
+next:
     close(fd[0]);
     close(fd[1]);
-    if(flag2){
-        waitpid(pid,NULL,0);
-        waitpid(pid2,NULL,0);
+    if (flag2)
+    {
+        waitpid(pid, NULL, 0);
+        waitpid(pid2, NULL, 0);
     }
-    get_Line();
+    get_Line(true);
     return 0;
 }
+void append()
+{
+    FILE *f = fopen("historial.txt", "a");
+    fprintf(f, str);
+    fclose(f);
+}
 
-void get_Line()
-{//.exe 1 34 5 ping  | se
+void writef()
+{
+    FILE *f = fopen("historial.txt", "w");
+    fprintf(f, str);
+    fclose(f);
+}
+void print_Array(){
+
+    int n=p;
+        for(int i=n-1;i>=0;i--){
+        printf("%d%s%s\n",i+1," ",commad_list[i]);
+    }
+}
+bool init_Array()
+{
+    int contador=0;
+    int j=0;
+    p=0;
+    FILE *f = fopen("historial.txt", "r");
+    if (f == NULL)
+    {
+        printf("No se encuentra el archivo");
+    }
+    else{
+    while (!feof(f))
+    {
+        fgets(str, 300, f);
+        contador++;
+        p++;
+    }
+    contador--;
+    p--;
+    fseek(f,0,SEEK_SET);
+    while (!feof(f))
+    {
+        fgets(str, 300, f);
+        j=strlen(str);
+        str[j-1]='\0';
+        strcpy(commad_list[contador-1],str);
+        contador--;
+    }
+    fclose(f);
+    return true;
+}
+}
+void get_Line(bool flag)
+{
     int n;
     char *username;
     username = getlogin();
     char *token;
+    char aux[80];
     strcpy(str, "");
+    if (flag)
+    {
+        init_Array();
+    }
     printf("%s%s%s", "@", username, ">>>$");
     gets(str);
+    if (strcmp(str, "exit") == 0)
+    {
+        exit(1);
+    }
+    if (strcmp(str, "historial") == 0)
+    {   print_Array();
+        get_Line(true);   
+    }
+    strcpy(aux, str);
+    n = strlen(str);
+    str[n] = '\n';
+    if (flag == false)
+    {
+        writef();
+    }
+    else
+    {
+        append();
+    }
+    strcpy(str, aux);
     char *argv2[100];
     n = strlen(str);
     token = strtok(str, " ");

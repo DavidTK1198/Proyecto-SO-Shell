@@ -1,0 +1,7 @@
+ps
+ls
+ls &
+ps
+ls
+ps
+ps
