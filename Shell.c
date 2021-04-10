@@ -21,7 +21,7 @@ https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd0
 #include <signal.h>
 #include <stdlib.h>
 #include <wait.h>
-void get_Line(bool);
+void get_Line(bool,char*);
 void writef();
 void append();
 //bool checkPipe(char **);
@@ -34,17 +34,23 @@ char commad_list[100][100];
 int p=0;
 bool init_Array();
 void print_Array();
+void mov_Array(char**,int);
 int main(int argc, char *argv[])
 {
     pid_t pid;
     pid_t pid2;
     int n = argc;
     int fd[2];
+    char* ruta=argv[0];
     bool flag = false;
     bool flag2 = false;
     pipe(fd);
     char *ret;
     char *helpme;
+    if(n>=2){
+        move_Array(argv,argc);
+        n--;
+    }
     int j = 0;
     if (n > 2)
     {
@@ -70,7 +76,7 @@ int main(int argc, char *argv[])
     ret = strchr(argv[0], '/');
     if (n < 2 && ret != NULL)
     {
-        get_Line(false);
+        get_Line(false,ruta);
     }
 
     pid = fork();
@@ -150,7 +156,7 @@ next:
         waitpid(pid, NULL, 0);
         waitpid(pid2, NULL, 0);
     }
-    get_Line(true);
+    get_Line(true,ruta);
     return 0;
 }
 void append()
@@ -173,6 +179,13 @@ void print_Array(){
         printf("%d%s%s\n",i+1," ",commad_list[i]);
     }
 }
+
+void move_Array(char** argv,int k){
+    for(int i=0;i<k;i++){
+        argv[i]=argv[i+1];
+    }
+}
+
 bool init_Array()
 {
     int contador=0;
@@ -205,7 +218,7 @@ bool init_Array()
     return true;
 }
 }
-void get_Line(bool flag)
+void get_Line(bool flag,char* argv)
 {
     int n;
     char *username;
@@ -214,8 +227,9 @@ void get_Line(bool flag)
     char aux[80];
     strcpy(str, "");
     if (flag)
-    {
+    {   if(p==0){
         init_Array();
+        }
     }
     printf("%s%s%s", "@", username, ">>>$");
     gets(str);
@@ -225,7 +239,8 @@ void get_Line(bool flag)
     }
     if (strcmp(str, "historial") == 0)
     {   print_Array();
-        get_Line(true);   
+        append();
+        get_Line(true,argv);   
     }
     strcpy(aux, str);
     n = strlen(str);
@@ -242,11 +257,12 @@ void get_Line(bool flag)
     char *argv2[100];
     n = strlen(str);
     token = strtok(str, " ");
-    int i = 0;
+    int i = 1;
     if (strcmp(str, "exit") == 0)
     {
         exit(1);
     }
+    argv2[i-1]=argv;
     while (token != NULL)
     {
         argv2[i] = token;
@@ -254,5 +270,5 @@ void get_Line(bool flag)
         i++;
     }
     argv2[i] = NULL; //ls-a
-    int p = execv("./a.out", argv2);
+    int p = execv(argv, argv2);
 }
