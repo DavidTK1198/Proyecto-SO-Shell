@@ -28,21 +28,17 @@ https://www.youtube.com/watch?v=6xbLgZpOBi8
 #include <signal.h>
 #include <stdlib.h>
 #include <wait.h>
+#include<ctype.h>
 void get_Line(bool,char*);
 void writef();
 void append();
-//bool checkPipe(char **);
-//void pipeProcess(char **);
-//void pipeProcess2(char **);
-//void initProcess(char **);
-//bool checkAmperson(char**);
 char str[300];
 char commad_list[100][100];
 int p=0;
 bool init_Array();
 void print_Array();
 void mov_Array(char**,int);
-char* get_Element(int);
+char*  get_Element(int);
 int main(int argc, char *argv[])
 {
     pid_t pid;
@@ -174,6 +170,15 @@ void append()
     fclose(f);
 }
 
+char* get_Element(int s){
+    s--;
+    for(int i=0;i<p;i++){
+            if(i==s){
+                return commad_list[i];
+            }
+    }
+    return NULL;
+}
 void writef()
 {
     FILE *f = fopen("historial.txt", "w");
@@ -233,33 +238,55 @@ void get_Line(bool flag,char* argv)
     username = getlogin();
     char *token;
     char aux[80];
-    strcpy(str, "");
     if (flag)
-    {   if(p==0){
+    {   
         init_Array();
-        }
+        
     }
     printf("%s%s%s", "@", username, ">>>$");
+    strcpy(str, "");
+    memset(str,'\0',sizeof(str));
     gets(str);
     if (strcmp(str, "exit") == 0)
     {
         exit(1);
     }
     if (strcmp(str, "historial") == 0)
-    {   print_Array();
-        append();
+    {      n = strlen(str);
+         str[n] = '\n';
+         append();
+         init_Array();  
+         print_Array();
         get_Line(true,argv);   
     }
     bool ayudante = false;
     if(str[0] == '!'){
-        for(int p=0; p<(strlen(str)-1);p++){
+        n=strlen(str);
+        for(int p=0; p<n-1;p++){
+            str[p]=str[p+1];
             if(isdigit(str[p])){
                
             }else{
                 ayudante = true;
+                printf("Error!! se encontro un caracter\n");
                 break;
             }
+            
 
+        }
+        str[n-1]='\0';
+        if(ayudante==false){
+            n=atoi(str);
+            token=get_Element(n);
+            if(token!=NULL){
+            printf("El comando elegido fue %s\n",token);
+            get_Line(true,argv);
+            }else{
+                printf("No se encontro el comando");
+                get_Line(true,argv);
+            }
+        }else{
+            get_Line(true,argv);
         }
     }
     strcpy(aux, str);

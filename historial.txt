@@ -1,5 +1,5 @@
 ps
 ls
-ls -a
-cat Shell.c | less
+historial
 ping -c 5 google.com | grep rtt
+historial
