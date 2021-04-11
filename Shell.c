@@ -250,6 +250,18 @@ void get_Line(bool flag,char* argv)
         append();
         get_Line(true,argv);   
     }
+    bool ayudante = false;
+    if(str[0] == '!'){
+        for(int p=0; p<(strlen(str)-1);p++){
+            if(isdigit(str[p])){
+               
+            }else{
+                ayudante = true;
+                break;
+            }
+
+        }
+    }
     strcpy(aux, str);
     n = strlen(str);
     str[n] = '\n';
