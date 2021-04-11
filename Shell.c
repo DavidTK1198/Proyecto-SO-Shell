@@ -35,6 +35,7 @@ int p=0;
 bool init_Array();
 void print_Array();
 void mov_Array(char**,int);
+char* get_Element(int);
 int main(int argc, char *argv[])
 {
     pid_t pid;

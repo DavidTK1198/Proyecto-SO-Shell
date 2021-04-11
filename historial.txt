@@ -3,4 +3,3 @@ ls
 ls -a
 cat Shell.c | less
 ping -c 5 google.com | grep rtt
-historialhistorial
