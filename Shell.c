@@ -4,15 +4,22 @@ SISTEMAS OPERATIVOS - EIF-212
 PROYECTO #1
 ESTUDIANTES: DANIEL DAVID BARRIENTOS ARAYA, DANIEL MADRIGAL
 PROFESOR: JOSE CALVO SUÁREZ
-
 REFERENCIAS:
 https://linux.die.net/man/2/waitpid
 https://overiq.com/c-programming-101/array-of-strings-in-c/
 https://www.guru99.com/c-tokens-keywords-identifier.html
+https://linux.die.net/man/2/waitpid
+https://man7.org/linux/man-pages/man2/waitid.2.html
 https://stackoverflow.com/questions/21248840/example-of-waitpid-in-use
+https://www.tutorialspoint.com/c_standard_library/c_function_strncpy.htm#:~:text=The%20C%20library%20function%20char,be%20padded%20with%20null%20bytes
 https://www.tutorialspoint.com/c_standard_library/c_function_strtok.html
 https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd00/rtgtlgr.htm
+https://www.youtube.com/watch?v=pO1wuN3hJZ4&t=7s
+https://www.youtube.com/watch?v=oxWxcYoJJdM&t=666s
+https://www.youtube.com/watch?v=Mqb2dVRe0uo&t=560s
+https://www.youtube.com/watch?v=6xbLgZpOBi8
 */
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdbool.h>
