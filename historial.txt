@@ -1,5 +1,5 @@
-ps
-ls
-historial
-ping -c 5 google.com | grep rtt
+ps &
+ls &
+ls -l
+ps &
 historial

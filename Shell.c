@@ -17,9 +17,10 @@ https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd0
 https://www.youtube.com/watch?v=pO1wuN3hJZ4&t=7s
 https://www.youtube.com/watch?v=oxWxcYoJJdM&t=666s
 https://www.youtube.com/watch?v=Mqb2dVRe0uo&t=560s
+https://www.youtube.com/watch?v=PErrlOx3LYE
+https://stackoverflow.com/questions/1023955/signals-dont-re-enable-properly-across-execv
 https://www.youtube.com/watch?v=6xbLgZpOBi8
 */
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -29,23 +30,29 @@ https://www.youtube.com/watch?v=6xbLgZpOBi8
 #include <stdlib.h>
 #include <wait.h>
 #include<ctype.h>
-void get_Line(bool,char*);
-void writef();
-void append();
 char str[300];
 char commad_list[100][100];
 int p=0;
+char* ruta;
 bool init_Array();
 void print_Array();
 void mov_Array(char**,int);
 char*  get_Element(int);
+void get_Line(bool);
+void writef();
+void append();
+void handler(int);
 int main(int argc, char *argv[])
 {
     pid_t pid;
     pid_t pid2;
+     struct sigaction sa;//Necesario para realizar el background
+    sa.sa_flags = SA_NODEFER;//referencia arriba
+    sa.sa_handler = &handler;
+    sigemptyset(&sa.sa_mask);
     int n = argc;
     int fd[2];
-    char* ruta=argv[0];
+    ruta=argv[0];
     bool flag = false;
     bool flag2 = false;
     pipe(fd);
@@ -75,12 +82,13 @@ int main(int argc, char *argv[])
     {
         argv[n - 1] = NULL;
         flag = true;
+        sigaction(SIGCHLD,&sa,0);
     } //
     ////////
     ret = strchr(argv[0], '/');
     if (n < 2 && ret != NULL)
     {
-        get_Line(false,ruta);
+        get_Line(false);
     }
 
     pid = fork();
@@ -91,6 +99,9 @@ int main(int argc, char *argv[])
     }
     else if (pid == 0)
     {
+        if(flag){
+         printf("[1] %d\n",getpid());   
+        }
         if (flag2)
         {
             dup2(fd[1], STDOUT_FILENO);
@@ -141,16 +152,11 @@ int main(int argc, char *argv[])
 
     if (flag)
     {
-        waitpid(pid, NULL, WNOHANG);
+        waitpid(pid, NULL, 0);
     }
     else
     {
         wait(NULL);
-    }
-
-    if (flag)
-    {
-        int c = getchar();
     }
 next:
     close(fd[0]);
@@ -160,8 +166,12 @@ next:
         waitpid(pid, NULL, 0);
         waitpid(pid2, NULL, 0);
     }
-    get_Line(true,ruta);
+    get_Line(true);
     return 0;
+}
+void handler(int sig){
+    printf("[1] + Hecho\n");
+    get_Line(true);
 }
 void append()
 {
@@ -231,7 +241,7 @@ bool init_Array()
     return true;
 }
 }
-void get_Line(bool flag,char* argv)
+void get_Line(bool flag)
 {
     int n;
     char *username;
@@ -257,7 +267,7 @@ void get_Line(bool flag,char* argv)
          append();
          init_Array();  
          print_Array();
-        get_Line(true,argv);   
+        get_Line(true);   
     }
     bool ayudante = false;
     if(str[0] == '!'){
@@ -280,13 +290,13 @@ void get_Line(bool flag,char* argv)
             token=get_Element(n);
             if(token!=NULL){
             printf("El comando elegido fue %s\n",token);
-            get_Line(true,argv);
+            get_Line(true);
             }else{
                 printf("No se encontro el comando");
-                get_Line(true,argv);
+                get_Line(true);
             }
         }else{
-            get_Line(true,argv);
+            get_Line(true);
         }
     }
     strcpy(aux, str);
@@ -309,7 +319,7 @@ void get_Line(bool flag,char* argv)
     {
         exit(1);
     }
-    argv2[i-1]=argv;
+    argv2[i-1]=ruta;
     while (token != NULL)
     {
         argv2[i] = token;
@@ -317,5 +327,5 @@ void get_Line(bool flag,char* argv)
         i++;
     }
     argv2[i] = NULL; //ls-a
-    int p = execv(argv, argv2);
+    int p = execv(ruta, argv2);
 }
