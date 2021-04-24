@@ -1,5 +1,6 @@
-ps &
-ls &
-ls -l
-ps &
-historial
+ps
+ls
+ls -a
+ls -l &
+cat Shell.c | less
+ping -c 5 google.com | grep rtt

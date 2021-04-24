@@ -29,68 +29,57 @@ https://www.youtube.com/watch?v=6xbLgZpOBi8
 #include <signal.h>
 #include <stdlib.h>
 #include <wait.h>
-#include<ctype.h>
+#include <ctype.h>
 char str[300];
-char commad_list[100][100];
-int p=0;
-char* ruta;
+char commad_list[100][100];//almacena los comandos del usuario
+int p = 0;
+char *ruta;
 bool init_Array();
 void print_Array();
-void mov_Array(char**,int);
-char*  get_Element(int);
+void mov_Array(char **, int);
+char *get_Element(int);
 void get_Line(bool);
 void writef();
 void append();
 void handler(int);
+bool pipeProcess(char **, int *, int *);
+void secondChildProcess(char **, int *,int*);
+void firstChildProcess(char **, int *,int*);
 int main(int argc, char *argv[])
 {
     pid_t pid;
     pid_t pid2;
-     struct sigaction sa;//Necesario para realizar el background
-    sa.sa_flags = SA_NODEFER;//referencia arriba
+    struct sigaction sa;      //Necesario para realizar el background
+    sa.sa_flags = SA_NODEFER; //referencia arriba
     sa.sa_handler = &handler;
     sigemptyset(&sa.sa_mask);
     int n = argc;
     int fd[2];
-    ruta=argv[0];
-    bool flag = false;
+    ruta = argv[0];
+    bool flag = false;//banderas para capturar el | o &
     bool flag2 = false;
     pipe(fd);
     char *ret;
-    char *helpme;
-    if(n>=2){
-        move_Array(argv,argc);
+    if (n >= 2){
+        move_Array(argv, argc);
         n--;
     }
     int j = 0;
-    if (n > 2)
-    {
-        for (int i = 0; i < n; i++)
-        { //cat Shell.c | less
-            helpme = strchr(argv[i], '|');
-            if (helpme != NULL)
-            {
-                flag2 = true;
-                break;
-            }
-            j++;
-        }
+    if (n > 2){
+        flag2 = pipeProcess(argv, &n, &j);
     }
-    //////////////
+    //Verificación del &
     ret = strchr(argv[n - 1], '&');
-    if (ret != NULL)
-    {
+    if (ret != NULL){
         argv[n - 1] = NULL;
         flag = true;
-        sigaction(SIGCHLD,&sa,0);
-    } //
-    ////////
-    ret = strchr(argv[0], '/');
-    if (n < 2 && ret != NULL)
-    {
-        get_Line(false);
-    }
-
+        sigaction(SIGCHLD, &sa, 0);
+    } //activa la  funcion para correr en el backround
+    
+    ret = strchr(argv[0], '/');//En caso de ser la 
+    if (n < 2 && ret != NULL){//primera ejecución
+        get_Line(false);    //se vuelve a llamar
+    }               // a si mismo para rellenar argv
     pid = fork();
     if (pid < 0)
     {
@@ -99,24 +88,19 @@ int main(int argc, char *argv[])
     }
     else if (pid == 0)
     {
-        if(flag){
-         printf("[1] %d\n",getpid());   
+        if (flag)
+        {
+            printf("[1] %d\n", getpid());
         }
         if (flag2)
         {
+            
             dup2(fd[1], STDOUT_FILENO);
             close(fd[0]);
             close(fd[1]);
-            char *token;
-            //cat shell.c --> se va| less ssss s...
-            for (int i = j; i < n; i++)
-            {
-                token = argv[i];
-                argv[i] = NULL; //cat Shell.c
-            }
-            int c = execvp(argv[0], argv);
-        }
-        ///////////////
+            firstChildProcess(argv,&n,&j);
+//se llama esta funcion en caso de encontrar un | 
+        }        
         int p = execvp(argv[0], argv);
         printf("%s\n", "Comando o ruta no encontrada");
         exit(-1);
@@ -131,17 +115,8 @@ int main(int argc, char *argv[])
                 dup2(fd[0], STDIN_FILENO);
                 close(fd[0]);
                 close(fd[1]);
-                char *argv2[100];
-                int contador = 0;
-                for (int i = j + 1; i < n; i++)
-                {
-                    argv2[contador] = argv[i];
-                    contador++;
-                }
-                argv2[contador] = NULL;
-                int pp = execvp(argv2[0], argv2);
-                printf("%s\n", "Comando o ruta no encontrada");
-                exit(-1);
+               secondChildProcess(argv,&n,&j);
+//continuación del pipe por medio del segundo hijo
             }
             else
             {
@@ -169,7 +144,47 @@ next:
     get_Line(true);
     return 0;
 }
-void handler(int sig){
+
+bool pipeProcess(char **argv, int *n, int *j)
+{
+    char *helpme;
+    for (int i = 0; i < *n; i++)
+    {
+        helpme = strchr(argv[i], '|');
+        if (helpme != NULL)
+        {
+            return true;
+        }
+        *j = *j + 1;
+    }
+    return false;
+}
+
+void firstChildProcess(char ** argv, int * n,int* j){
+         char *token;
+            
+            for (int i = *j; i < *n; i++)
+            {
+                token = argv[i];
+                argv[i] = NULL; 
+            }
+            int c = execvp(argv[0], argv);
+}
+void secondChildProcess(char ** argv, int * n,int* j)
+{
+    char *argv2[100];
+    int contador = 0;
+    for (int i = *j + 1; i < *n; i++){
+        argv2[contador] = argv[i];
+        contador++;
+    }
+    argv2[contador] = NULL;
+    int pp = execvp(argv2[0], argv2);
+    printf("%s\n", "Comando o ruta no encontrada");
+    exit(-1);
+}
+void handler(int sig)
+{
     printf("[1] + Hecho\n");
     get_Line(true);
 }
@@ -180,12 +195,15 @@ void append()
     fclose(f);
 }
 
-char* get_Element(int s){
+char *get_Element(int s)
+{
     s--;
-    for(int i=0;i<p;i++){
-            if(i==s){
-                return commad_list[i];
-            }
+    for (int i = 0; i < p; i++)
+    {
+        if (i == s)
+        {
+            return commad_list[i];
+        }
     }
     return NULL;
 }
@@ -195,51 +213,56 @@ void writef()
     fprintf(f, str);
     fclose(f);
 }
-void print_Array(){
+void print_Array()
+{
 
-    int n=p;
-        for(int i=n-1;i>=0;i--){
-        printf("%d%s%s\n",i+1," ",commad_list[i]);
+    int n = p;
+    for (int i = n - 1; i >= 0; i--)
+    {
+        printf("%d%s%s\n", i + 1, " ", commad_list[i]);
     }
 }
 
-void move_Array(char** argv,int k){
-    for(int i=0;i<k;i++){
-        argv[i]=argv[i+1];
+void move_Array(char **argv, int k)
+{
+    for (int i = 0; i < k; i++)
+    {
+        argv[i] = argv[i + 1];
     }
 }
 
 bool init_Array()
 {
-    int contador=0;
-    int j=0;
-    p=0;
+    int contador = 0;
+    int j = 0;
+    p = 0;
     FILE *f = fopen("historial.txt", "r");
     if (f == NULL)
     {
         printf("No se encuentra el archivo");
     }
-    else{
-    while (!feof(f))
+    else
     {
-        fgets(str, 300, f);
-        contador++;
-        p++;
-    }
-    contador--;
-    p--;
-    fseek(f,0,SEEK_SET);
-    while (!feof(f))
-    {
-        fgets(str, 300, f);
-        j=strlen(str);
-        str[j-1]='\0';
-        strcpy(commad_list[contador-1],str);
+        while (!feof(f))
+        {
+            fgets(str, 300, f);
+            contador++;
+            p++;
+        }
         contador--;
+        p--;
+        fseek(f, 0, SEEK_SET);
+        while (!feof(f))
+        {
+            fgets(str, 300, f);
+            j = strlen(str);
+            str[j - 1] = '\0';
+            strcpy(commad_list[contador - 1], str);
+            contador--;
+        }
+        fclose(f);
+        return true;
     }
-    fclose(f);
-    return true;
-}
 }
 void get_Line(bool flag)
 {
@@ -249,53 +272,61 @@ void get_Line(bool flag)
     char *token;
     char aux[80];
     if (flag)
-    {   
+    {
         init_Array();
-        
     }
     printf("%s%s%s", "@", username, ">>>$");
     strcpy(str, "");
-    memset(str,'\0',sizeof(str));
+    memset(str, '\0', sizeof(str));
     gets(str);
     if (strcmp(str, "exit") == 0)
     {
         exit(1);
     }
     if (strcmp(str, "historial") == 0)
-    {      n = strlen(str);
-         str[n] = '\n';
-         append();
-         init_Array();  
-         print_Array();
-        get_Line(true);   
+    {
+        n = strlen(str);
+        str[n] = '\n';
+        append();
+        init_Array();
+        print_Array();
+        get_Line(true);
     }
     bool ayudante = false;
-    if(str[0] == '!'){
-        n=strlen(str);
-        for(int p=0; p<n-1;p++){
-            str[p]=str[p+1];
-            if(isdigit(str[p])){
-               
-            }else{
+    if (str[0] == '!')
+    {
+        n = strlen(str);
+        for (int p = 0; p < n - 1; p++)
+        {
+            str[p] = str[p + 1];
+            if (isdigit(str[p]))
+            {
+            }
+            else
+            {
                 ayudante = true;
                 printf("Error!! se encontro un caracter\n");
                 break;
             }
-            
-
         }
-        str[n-1]='\0';
-        if(ayudante==false){
-            n=atoi(str);
-            token=get_Element(n);
-            if(token!=NULL){
-            printf("El comando elegido fue %s\n",token);
-            get_Line(true);
-            }else{
+        str[n - 1] = '\0';
+        if (ayudante == false)
+        {
+            n = atoi(str);
+            token = get_Element(n);
+            if (token != NULL)
+            {
+                printf("El comando elegido fue %s\n", token);
+                get_Line(true);
+            }
+            else
+            {
                 printf("No se encontro el comando");
                 get_Line(true);
             }
-        }else{
+        }
+        else
+        {
             get_Line(true);
         }
     }
@@ -319,7 +350,7 @@ void get_Line(bool flag)
     {
         exit(1);
     }
-    argv2[i-1]=ruta;
+    argv2[i - 1] = ruta;
     while (token != NULL)
     {
         argv2[i] = token;
